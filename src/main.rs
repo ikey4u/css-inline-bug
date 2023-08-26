@@ -1,23 +1,8 @@
-use axum::{
-    extract::{Extension, Query},
-    http,
-    http::status::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::{extract::Query, http, response::IntoResponse};
 
 use serde::Deserialize;
 
-use std::{
-    cell::RefCell,
-    env::var,
-    fmt::Display,
-    fs::{File, OpenOptions},
-    io::{Read, Write},
-    net::SocketAddr,
-    path::{Path, PathBuf},
-    process::Command,
-    sync::{mpsc::Receiver, Arc, Mutex},
-};
+use std::{net::SocketAddr, sync::Arc};
 
 const DEFUALT_HOST: &'static str = "127.0.0.1";
 
@@ -26,12 +11,12 @@ struct Config {
     port: u16,
 }
 
-async fn ping(uri: http::Uri) -> impl IntoResponse {
+async fn ping(_uri: http::Uri) -> impl IntoResponse {
     log::info!("ping got request ...");
     (http::status::StatusCode::OK, "").into_response()
 }
 
-async fn render(uri: http::Uri) -> impl IntoResponse {
+async fn render(_uri: http::Uri) -> impl IntoResponse {
     let content = format!(
         r#"
         <!DOCTYPE html>
@@ -52,6 +37,7 @@ async fn render(uri: http::Uri) -> impl IntoResponse {
         body = "TEST BODY",
     );
 
+    // FIXME: very slow here
     let url = css_inline::Url::parse(&format!("http://{DEFUALT_HOST}:{}", 3009)).ok();
     let inliner = css_inline::CSSInliner::options()
         .base_url(url)
@@ -83,11 +69,11 @@ struct FileMeta {
     val: Option<String>,
 }
 
-async fn file(filemeta: Query<FileMeta>) -> impl IntoResponse {
+async fn file(_filemeta: Query<FileMeta>) -> impl IntoResponse {
     log::info!("got file request");
     let content = r#"
         .test {
-            color: red;
+           color: red;
            text-size: 32px;
         }
     "#;
